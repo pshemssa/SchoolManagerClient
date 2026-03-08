@@ -60,7 +60,7 @@ client-app/
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- MongoDB (v5 or higher)
+- Postgresql
 - npm or yarn
 
 ### Backend Setup
@@ -150,11 +150,16 @@ Frontend will run on `http://localhost:3000`
 3. Account is created but not verified
 4. User must wait for admin verification
 
+![alt text](image.png)
+
 ### Login
 1. User enters email, password
 2. System checks device ID matches registered device
 3. System verifies account is approved by admin
 4. JWT token is issued for authenticated sessions
+![alt text](image-1.png)
+
+![alt text](image-4.png)
 
 ### Fee Payment
 1. Navigate to Fee Payment page
@@ -164,10 +169,16 @@ Frontend will run on `http://localhost:3000`
 5. Balance is updated immediately for deposits
 6. Withdrawals are marked as pending for admin approval
 
+
+![alt text](image-2.png)
+![alt text](image-5.png)
+
 ### Viewing Academic Records
 1. Dashboard shows overview of grades and attendance
 2. Click on specific sections for detailed views
 3. Timetable shows class schedule
+
+![alt text](image-3.png)
 
 ## Development Notes
 - All API calls require authentication except registration and login
@@ -175,6 +186,8 @@ Frontend will run on `http://localhost:3000`
 - Sessions are managed via JWT tokens
 - Frontend uses localStorage for token persistence
 - Low balance threshold is set at $1000
+
+
 
 ## Testing
 To test the application:
@@ -200,8 +213,3 @@ To test the application:
 - **CORS errors**: Verify backend CORS configuration
 - **Token expired**: Login again to get new token
 
-## License
-MIT
-
-## Support
-For issues and questions, please contact the development team.
