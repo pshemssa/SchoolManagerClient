@@ -1,16 +1,32 @@
 const feeService = require('../services/feeService');
 const { feeTransactionDTO, studentDTO } = require('../dtos');
+const cloudinary = require('../config/cloudinary');
 
 class FeeController {
   async deposit(req, res) {
     try {
       const { studentId, amount, description } = req.body;
-      const result = await feeService.deposit(studentId, amount, description);
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'Proof of payment is required' });
+      }
+
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'fee_proofs' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+
+      const feeResult = await feeService.deposit(studentId, parseFloat(amount), description, result.secure_url);
       
       res.json({
-        message: 'Fee payment successful',
-        balance: result.student.feeBalance,
-        transaction: feeTransactionDTO(result.transaction)
+        message: 'Payment submitted for verification',
+        balance: feeResult.student.feeBalance,
+        transaction: feeTransactionDTO(feeResult.transaction)
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -20,12 +36,27 @@ class FeeController {
   async withdraw(req, res) {
     try {
       const { studentId, amount, description } = req.body;
-      const result = await feeService.withdraw(studentId, amount, description);
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'Proof is required' });
+      }
+
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'refund_proofs' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        ).end(req.file.buffer);
+      });
+
+      const feeResult = await feeService.withdraw(studentId, parseFloat(amount), description, result.secure_url);
       
       res.json({
         message: 'Refund request submitted',
-        balance: result.student.feeBalance,
-        transaction: feeTransactionDTO(result.transaction)
+        balance: feeResult.student.feeBalance,
+        transaction: feeTransactionDTO(feeResult.transaction)
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
