@@ -1,9 +1,10 @@
 const userDTO = (user) => ({
-  id: user._id,
+  id: user._id || user.id,
   name: user.name,
   email: user.email,
   role: user.role,
-  isVerified: user.isVerified
+  isVerified: user.isVerified,
+  studentId: user.studentId
 });
 
 const studentDTO = (student) => ({
@@ -15,7 +16,7 @@ const studentDTO = (student) => ({
 });
 
 const feeTransactionDTO = (transaction) => ({
-  id: transaction._id,
+  id: transaction._id || transaction.id,
   type: transaction.type,
   amount: transaction.amount,
   status: transaction.status,

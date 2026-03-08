@@ -4,11 +4,16 @@ const { hashPassword, comparePassword } = require('../utils/crypto');
 
 class AuthService {
   async register(data) {
-    const { name, email, password, role, deviceId } = data;
+    const { name, email, password, role, deviceId, studentId } = data;
     
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new Error('User already exists');
+    }
+
+    const student = await prisma.student.findUnique({ where: { id: parseInt(studentId) } });
+    if (!student) {
+      throw new Error('Invalid student ID');
     }
 
     const hashedPassword = hashPassword(password);
@@ -19,7 +24,8 @@ class AuthService {
         password: hashedPassword,
         role,
         deviceId,
-        isVerified: false
+        isVerified: false,
+        studentId: parseInt(studentId)
       }
     });
 
@@ -27,7 +33,9 @@ class AuthService {
   }
 
   async login(email, password, deviceId) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ 
+      where: { email }
+    });
     
     if (!user) {
       throw new Error('Invalid credentials');
@@ -47,7 +55,7 @@ class AuthService {
     }
 
     const token = jwt.sign(
-      { userId: user.id, role: user.role },
+      { userId: user.id, role: user.role, studentId: user.studentId },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
