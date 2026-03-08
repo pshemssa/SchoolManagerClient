@@ -1,11 +1,12 @@
 import { Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { feeService } from '../services/api';
+import { feeService, studentService } from '../services/api';
 
 export default function FeesPage() {
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
+  const [studentName, setStudentName] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -18,13 +19,15 @@ export default function FeesPage() {
 
   const loadData = async () => {
     try {
-      const [balanceRes, historyRes] = await Promise.all([
+      const [balanceRes, historyRes, profileRes] = await Promise.all([
         feeService.getBalance(studentId),
-        feeService.getHistory(studentId)
+        feeService.getHistory(studentId),
+        studentService.getProfile(studentId)
       ]);
 
       setBalance(balanceRes.data.balance);
       setTransactions(historyRes.data.transactions);
+      setStudentName(profileRes.data.student?.name || 'Student');
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -63,11 +66,16 @@ export default function FeesPage() {
         </div>
 
         <nav className="p-4 space-y-1">
+          <NavItem icon="🏠" label="Dashboard" to="/dashboard" />
           <NavItem icon="💰" label="Fees" active={true} to="/fees" />
-          <NavItem icon="📚" label="Academics" to="/academics" />
+          <NavItem icon="📚" label="Academics" to="/academics/grades" />
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 space-y-3">
+          <div className="px-3 py-2 bg-gray-800/50 rounded-lg">
+            <p className="text-xs text-gray-400 mb-1">Parent of:</p>
+            <p className="text-sm font-medium text-gray-200">{studentName}</p>
+          </div>
           <button
             onClick={() => {
               localStorage.removeItem('token');
@@ -116,6 +124,12 @@ export default function FeesPage() {
               >
                 Make Payment
               </button>
+              <button
+                onClick={() => navigate('/fee-payment?type=withdraw')}
+                className="w-full mt-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg font-medium transition"
+              >
+                Request Refund
+              </button>
             </div>
 
             <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
@@ -149,7 +163,7 @@ export default function FeesPage() {
                   <tbody className="divide-y divide-gray-800">
                     {transactions.map(tx => (
                       <tr key={tx.id} className="hover:bg-gray-800/50">
-                        <td className="px-6 py-4">{new Date(tx.date).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">{new Date(tx.createdAt || tx.date).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${tx.type === 'deposit' ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
                             {tx.type}
