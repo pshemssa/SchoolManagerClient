@@ -1,25 +1,68 @@
 // pages/client/Dashboard.tsx
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Shield } from 'lucide-react';
+import { feeService, studentService } from '../services/api';
+import api from '../services/api';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [studentName, setStudentName] = useState('');
+  const [parentName, setParentName] = useState('');
+  const [feeBalance, setFeeBalance] = useState(0);
+  const [gpa, setGpa] = useState(0);
+  const [attendance, setAttendance] = useState(0);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Mock data (replace with real API fetches)
-  const studentName = "James";
-  const parentName = "Sarah";
-  const feeBalance = 5300;
-  const gpa = 3.72;
-  const attendance = 73.3;
-  const notificationsCount = 3;
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const studentId = user.studentId;
 
-  const recentTransactions = [
-    { id: 1, desc: "Term 1 Tuition Fee", date: "2024-09-01", amount: 2500, type: "deposit", status: "completed" },
-    { id: 2, desc: "Lab Fee", date: "2024-09-05", amount: 500, type: "deposit", status: "completed" },
-    { id: 3, desc: "Activity fee refund", date: "2024-10-15", amount: -200, type: "withdrawal", status: "pending" },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [profileRes, balanceRes, historyRes, gradesRes, attendanceRes] = await Promise.all([
+        api.get(`/student/${studentId}/profile`),
+        feeService.getBalance(studentId),
+        feeService.getHistory(studentId),
+        api.get(`/student/${studentId}/grades`),
+        api.get(`/student/${studentId}/attendance`)
+      ]);
+
+      setStudentName(profileRes.data.student?.name || 'Student');
+      setParentName(user.name || 'Parent');
+      setFeeBalance(balanceRes.data.balance || 0);
+      
+      const grades = gradesRes.data.grades || [];
+      const avgGrade = grades.length > 0 ? (grades.reduce((sum, g) => sum + (g.marks || 0), 0) / grades.length / 100 * 4).toFixed(2) : 0;
+      setGpa(avgGrade);
+
+      const attendanceData = attendanceRes.data.attendance || [];
+      const attendanceRate = attendanceData.length > 0 ? ((attendanceData.filter(a => a.status === 'present').length / attendanceData.length) * 100).toFixed(1) : 0;
+      setAttendance(attendanceRate);
+
+      const transactions = historyRes.data.transactions || [];
+      setRecentTransactions(transactions.slice(0, 3));
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-300">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex">
@@ -39,11 +82,12 @@ export default function Dashboard() {
       >
         <div className="p-5 border-b border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
-              🎓
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+              <Shield/>
             </div>
             <div>
               <h2 className="font-semibold">SchoolSync</h2>
+              <p className="text-xs text-gray-400">{user.role?.toUpperCase()}</p>
             </div>
           </div>
           <button className="lg:hidden text-gray-400 hover:text-white text-2xl" onClick={() => setSidebarOpen(false)}>
@@ -53,13 +97,23 @@ export default function Dashboard() {
 
         <nav className="p-4 space-y-1">
           <NavItem icon="🏠" label="Dashboard" active to="/dashboard" />
-          <NavItem icon="📚" label="Academics" to="/academics" />
           <NavItem icon="💰" label="Fees" to="/fees" />
+          <NavItem icon="📚" label="Academics" to="/academics/grades" />
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 space-y-3">
-          <NavItem icon="🌞" label="Light Mode" />
-          <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-lg">
+          <div className="px-3 py-2 bg-gray-800/50 rounded-lg">
+            <p className="text-xs text-gray-400 mb-1">Parent of:</p>
+            <p className="text-sm font-medium text-gray-200">{studentName}</p>
+          </div>
+          <button 
+            onClick={() => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              navigate('/login');
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-lg"
+          >
             <span>➜</span> Sign Out
           </button>
         </div>
@@ -85,11 +139,10 @@ export default function Dashboard() {
           </p>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             <StatCard title="Fee Balance" value={`$${feeBalance.toLocaleString()}`} icon="💰" color="text-cyan-400" />
-            <StatCard title="GPA Average" value={gpa.toFixed(2)} icon="📈" color="text-green-400" trend="up" />
+            <StatCard title="GPA Average" value={gpa} icon="📈" color="text-green-400" />
             <StatCard title="Attendance" value={`${attendance}%`} icon="📅" color="text-orange-400" />
-            <StatCard title="Notifications" value={notificationsCount} icon="🔔" color="text-purple-400" />
           </div>
 
           {/* Recent Transactions */}
@@ -108,8 +161,8 @@ export default function Dashboard() {
                       {tx.type === 'deposit' ? '↓' : '↑'}
                     </div>
                     <div>
-                      <p className="font-medium">{tx.desc}</p>
-                      <p className="text-sm text-gray-500">{tx.date}</p>
+                      <p className="font-medium">{tx.description || 'Transaction'}</p>
+                      <p className="text-sm text-gray-500">{new Date(tx.createdAt || tx.date).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -125,6 +178,11 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
+            {recentTransactions.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No recent transactions.
+              </div>
+            )}
           </section>
 
           {/* You can add Recent Grades here similarly if you want a preview */}
@@ -148,16 +206,17 @@ function StatCard({ title, value, icon, color, trend }) {
 }
 
 function NavItem({ icon, label, active = false, to }) {
+  const navigate = useNavigate();
   return (
-    <Link
-      to={to}
+    <button
+      onClick={() => to && navigate(to)}
       className={`
-        flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition
-        ${active ? 'bg-indigo-600/20 text-indigo-400 font-medium' : 'text-gray-300 hover:bg-gray-800'}
+        w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition
+        ${active ? 'bg-blue-600/20 text-blue-400 font-medium' : 'text-gray-300 hover:bg-gray-800'}
       `}
     >
-      <span className="w-6 text-center text-lg">{icon}</span>
-      <span>{label}</span>
-    </Link>
+      <span className="w-6 text-center">{icon}</span>
+      <span className="flex-1 text-left">{label}</span>
+    </button>
   );
 }
