@@ -35,7 +35,7 @@ function App() {
             <Fees />
           </ProtectedRoute>
         } />
-        <Route path="/academics" element={
+        <Route path="/academics/grades" element={
           <ProtectedRoute>
             <Academics />
           </ProtectedRoute>
