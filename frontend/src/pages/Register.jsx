@@ -107,7 +107,8 @@ export default function Register() {
      name: "",
      email: "",
      password: "", 
-     role: "student" 
+     role: "parent",
+     studentId: ""
     }); 
     const [error, setError] = useState(""); const [success, setSuccess] = useState(""); const [loading, setLoading] = useState(false); const navigate = useNavigate(); const handleSubmit = async (e) => { e.preventDefault(); setError(""); setSuccess(""); setLoading(true); try { const deviceId = getDeviceId(); const response = await authService.register({ ...formData, deviceId }); setSuccess(response.data.message); setTimeout(() => navigate("/login"), 2000); } catch (err) { setError(err.response?.data?.error || "Registration failed"); } finally { setLoading(false); } };
 
@@ -195,9 +196,19 @@ export default function Register() {
               setFormData({ ...formData, role: e.target.value })
             }
           >
-            <option value="student">Student</option>
             <option value="parent">Parent</option>
           </select>
+
+          <label>Student ID</label>
+          <input
+            type="text"
+            placeholder="Enter student ID from admin"
+            value={formData.studentId}
+            onChange={(e) =>
+              setFormData({ ...formData, studentId: e.target.value })
+            }
+            required
+          />
 
           {error && <p className="error">{error}</p>}
           {success && <p className="success">{success}</p>}
