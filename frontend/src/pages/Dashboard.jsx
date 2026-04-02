@@ -1,7 +1,7 @@
-// pages/client/Dashboard.tsx
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import { feeService, studentService } from '../services/api';
 import api from '../services/api';
 
@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [attendance, setAttendance] = useState(0);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -65,7 +66,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex">
+    <div className={`min-h-screen flex ${isDark ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -74,23 +75,24 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 w-72 bg-gray-900 border-r border-gray-800
+          fixed inset-y-0 left-0 z-40 w-72 border-r
+          ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}
           transform transition-transform duration-300
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:relative
         `}
       >
-        <div className="p-5 border-b border-gray-800 flex items-center justify-between">
+        <div className={`p-5 border-b flex items-center justify-between ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
               <Shield/>
             </div>
             <div>
               <h2 className="font-semibold">SchoolSync</h2>
-              <p className="text-xs text-gray-400">{user.role?.toUpperCase()}</p>
+              <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{user.role?.toUpperCase()}</p>
             </div>
           </div>
-          <button className="lg:hidden text-gray-400 hover:text-white text-2xl" onClick={() => setSidebarOpen(false)}>
+          <button className={`lg:hidden text-2xl ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} onClick={() => setSidebarOpen(false)}>
             ×
           </button>
         </div>
@@ -101,10 +103,10 @@ export default function Dashboard() {
           <NavItem icon="📚" label="Academics" to="/academics/grades" />
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 space-y-3">
-          <div className="px-3 py-2 bg-gray-800/50 rounded-lg">
-            <p className="text-xs text-gray-400 mb-1">Parent of:</p>
-            <p className="text-sm font-medium text-gray-200">{studentName}</p>
+        <div className={`absolute bottom-0 left-0 right-0 p-4 border-t space-y-3 ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
+          <div className={`px-3 py-2 rounded-lg ${isDark ? 'bg-gray-800/50' : 'bg-gray-100'}`}>
+            <p className={`text-xs mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Parent of:</p>
+            <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{studentName}</p>
           </div>
           <button 
             onClick={() => {
@@ -112,7 +114,7 @@ export default function Dashboard() {
               localStorage.removeItem('user');
               navigate('/login');
             }}
-            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 rounded-lg"
+            className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg ${isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}`}
           >
             <span>➜</span> Sign Out
           </button>
@@ -122,8 +124,8 @@ export default function Dashboard() {
       {/* Main */}
       <div className="flex-1 flex flex-col">
         {/* Mobile top bar */}
-        <header className="bg-gray-900 border-b border-gray-800 px-5 py-4 flex items-center justify-between lg:hidden">
-          <button onClick={toggleSidebar} className="text-2xl text-gray-300">
+        <header className={`border-b px-5 py-4 flex items-center justify-between lg:hidden ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+          <button onClick={toggleSidebar} className={`text-2xl ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
             ☰
           </button>
           <span className="font-semibold">SchoolSync</span>
@@ -134,7 +136,7 @@ export default function Dashboard() {
           <h1 className="text-2xl md:text-3xl font-bold mb-2">
             Welcome back, {parentName} 👋
           </h1>
-          <p className="text-gray-400 mb-8">
+          <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Here's an overview of {studentName}'s academic status.
           </p>
 
@@ -146,23 +148,23 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Transactions */}
-          <section className="bg-gray-900 rounded-xl border border-gray-800 p-6 mb-10">
+          <section className={`rounded-xl border p-6 mb-10 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
             <h2 className="text-xl font-semibold mb-5">Recent Transactions</h2>
             <div className="space-y-4">
               {recentTransactions.map(tx => (
                 <div
                   key={tx.id}
-                  className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex items-center justify-between"
+                  className={`rounded-lg p-4 border flex items-center justify-between ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
                 >
                   <div className="flex items-start gap-4">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl ${
-                      tx.type === 'deposit' ? 'bg-green-900/40 text-green-400' : 'bg-red-900/40 text-red-400'
+                      tx.type === 'deposit' ? isDark ? 'bg-green-900/40 text-green-400' : 'bg-green-100 text-green-600' : isDark ? 'bg-red-900/40 text-red-400' : 'bg-red-100 text-red-600'
                     }`}>
                       {tx.type === 'deposit' ? '↓' : '↑'}
                     </div>
                     <div>
                       <p className="font-medium">{tx.description || 'Transaction'}</p>
-                      <p className="text-sm text-gray-500">{new Date(tx.createdAt || tx.date).toLocaleDateString()}</p>
+                      <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>{new Date(tx.createdAt || tx.date).toLocaleDateString()}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -170,7 +172,7 @@ export default function Dashboard() {
                       {tx.amount > 0 ? '+' : ''}${Math.abs(tx.amount).toLocaleString()}
                     </p>
                     <span className={`text-xs px-2.5 py-1 rounded-full mt-1 inline-block ${
-                      tx.status === 'completed' ? 'bg-green-900/50 text-green-300' : 'bg-yellow-900/50 text-yellow-300'
+                      tx.status === 'completed' ? isDark ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700' : isDark ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700'
                     }`}>
                       {tx.status}
                     </span>
@@ -179,7 +181,7 @@ export default function Dashboard() {
               ))}
             </div>
             {recentTransactions.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className={`text-center py-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                 No recent transactions.
               </div>
             )}
@@ -193,10 +195,11 @@ export default function Dashboard() {
 }
 
 function StatCard({ title, value, icon, color, trend }) {
+  const { isDark } = useTheme();
   return (
-    <div className="bg-gray-900 rounded-xl border border-gray-800 p-6">
+    <div className={`rounded-xl border p-6 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-gray-400 text-sm">{title}</p>
+        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{title}</p>
         <span className={`text-3xl ${color}`}>{icon}</span>
       </div>
       <p className="text-3xl font-bold">{value}</p>
@@ -206,13 +209,14 @@ function StatCard({ title, value, icon, color, trend }) {
 }
 
 function NavItem({ icon, label, active = false, to }) {
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   return (
     <button
       onClick={() => to && navigate(to)}
       className={`
         w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition
-        ${active ? 'bg-blue-600/20 text-blue-400 font-medium' : 'text-gray-300 hover:bg-gray-800'}
+        ${active ? 'bg-blue-600/20 text-blue-400 font-medium' : isDark ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'}
       `}
     >
       <span className="w-6 text-center">{icon}</span>
